@@ -89,6 +89,86 @@
 </div>
 
 <script>
+function normCode_(v){return String(v==null?'':v).trim().replace(/\s+/g,'').replace(/^'/,'')}
+function codeVariants_(bc) {
+  var c = normCode_(bc).replace(/\D/g, ''), out = [];
+  if (!c) return [normCode_(bc)];
+  out.push(c);
+  if (c.length === 13 && c[0] === '0') out.push(c.slice(1));
+  if (c.length === 12) out.push('0' + c);
+  if (c.length === 14 && c.slice(0, 2) === '00') out.push(c.slice(2));
+  return out;
+}
+function decodeHtml_(s) {
+  return String(s || '').replace(/&amp;/g, '&').replace(/&#0?39;|&apos;/g, "'").replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#(\d+);/g, function (m, n) { return String.fromCharCode(+n); })
+    .replace(/\s+/g, ' ').trim();
+}
+// [regex, Type (sheet style), product-name suffix, typical Pokémon MSRP]
+var TYPE_RULES_ = [
+  [/pok[eé]mon center.*elite trainer|elite trainer box.*pok[eé]mon center/i, 'ETB (Pokémon Center)', 'Pokémon Center ETB', 59.99],
+  [/elite trainer box|\bETB\b/i, 'ETB', 'Elite Trainer Box', 54.99],
+  [/booster bundle/i, 'Booster bundle', 'Booster Bundle', 26.94],
+  [/enhanced booster (display|box)/i, 'Enhanced booster box', 'Enhanced Booster Box', null],
+  [/collector booster/i, 'Collector booster box', 'Collector Booster Box', null],
+  [/booster display|booster box|display box/i, 'Booster box', 'Booster Box', null],
+  [/hobby box/i, 'Hobby box', 'Hobby Box', null],
+  [/mini tin/i, 'Mini tin', 'Mini Tin', 9.99],
+  [/\btins?\b/i, 'Tin', 'Tin', 26.99],
+  [/blaster/i, 'Blaster box', 'Blaster Box', null],
+  [/mega box/i, 'Mega box', 'Mega Box', null],
+  [/hanger/i, 'Hanger box', 'Hanger Box', null],
+  [/value pack|fat pack/i, 'Value pack', 'Value Pack', null],
+  [/build (and|&) battle/i, 'Build & Battle', 'Build & Battle Box', 21.99],
+  [/super[- ]premium collection/i, 'Super-Premium Collection', 'Super-Premium Collection', null],
+  [/ultra[- ]premium collection/i, 'Ultra-Premium Collection', 'Ultra-Premium Collection', null],
+  [/premium collection/i, 'Premium collection', 'Premium Collection', null],
+  [/illustration collection/i, 'Illustration collection', 'Illustration Collection', null],
+  [/figure collection/i, 'Figure collection', 'Figure Collection', null],
+  [/commander deck/i, 'Commander deck', 'Commander Deck', null],
+  [/3[- ]?pack|three[- ]pack|blister/i, '3-pack blister', '3-Pack Blister', 14.99],
+  [/collection|box set/i, 'Collection', 'Collection', null],
+  [/sleeved booster|booster pack/i, 'Booster pack', 'Booster Pack', 4.99]
+];
+function classify_(title) {
+  var t = String(title || ''), r = { category: '', type: '', suffix: '', msrpGuess: null, set: '', product: '' };
+  if (/magic|\bMTG\b/i.test(t)) r.category = 'Magic: The Gathering';
+  else if (/pok[eé]mon|\bTCG\b.*(scarlet|violet|sword|shield)|prismatic|charizard|pikachu/i.test(t)) r.category = 'Pokémon';
+  else if (/panini|topps|upper deck|bowman|donruss|prizm|optic|mosaic|contenders|\bnba\b|\bnfl\b|\bmlb\b|\bnhl\b|wnba|baseball|football|basketball|hockey|soccer|\bufc\b|\bwwe\b/i.test(t)) r.category = 'Sports cards';
+  for (var i = 0; i < TYPE_RULES_.length; i++) if (TYPE_RULES_[i][0].test(t)) {
+    r.type = TYPE_RULES_[i][1]; r.suffix = TYPE_RULES_[i][2]; r.msrpGuess = TYPE_RULES_[i][3]; break; }
+  if (r.category !== 'Pokémon') r.msrpGuess = null;
+  var era = /scarlet\s*(&|and)?\s*violet/i.test(t) ? 'Scarlet & Violet' : /mega evolution/i.test(t) ? 'Mega Evolution'
+          : /sword\s*(&|and)\s*shield/i.test(t) ? 'Sword & Shield' : '';
+  var s = t.replace(/pok[eé]mon center/ig, ' ').replace(/pok[eé]mon( company)?( international)?/ig, ' ')
+    .replace(/trading card game|trading cards|\bTCG\b|\bPTCG\b|magic:? the gathering|\bMTG\b/ig, ' ')
+    .replace(/elite trainer box|\bETB\b|enhanced booster (display|box)|collector booster( box| display)?|booster bundle|booster (display )?box|booster display|display box|mini tins?|\btins?\b|blaster( box)?|hobby box|mega box|hanger( box)?|value pack|(super|ultra)?[- ]?premium collection|illustration collection|figure collection|commander deck|collection|sleeved booster|booster packs?|3[- ]?pack( blister)?|blister|box set|build (and|&) battle( box)?|\bbox\b/ig, ' ')
+    .replace(/\bSV\s?\d+(\.\d+)?\b|\bSWSH\s?\d+(\.\d+)?\b|\bME\s?\d+\b|\b\d{1,2}\.5\b|\b\d+C\b/ig, ' ')
+    .replace(/scarlet\s*(&|and)?\s*violet|sword\s*(&|and)\s*shield|mega evolution/ig, ' ')
+    .replace(/\bEnglish\b|\bsealed\b|\bnew\b|\bofficial\b|\(\s*\)/ig, ' ')
+    .replace(/[:|–—]+|\s-\s|^\s*-|-\s*$/g, ' ').replace(/\s+/g, ' ').trim();
+  r.set = r.category === 'Pokémon' && era && s ? era + ' - ' + s : (s || era);
+  r.product = s && r.suffix ? s + ' ' + r.suffix : t;
+  return r;
+}
+function jinaTitle_(t) {
+  var m = t && String(t).match(/^Title:\s*(.+)$/m);
+  if (!m) return '';
+  var s = decodeHtml_(m[1]);
+  if (/not found|invalid barcode|security verification|just a moment|access denied|^go-upc$/i.test(s)) return '';
+  s = s.replace(/\s*[—-]\s*UPC\s*\d+\s*[—-]\s*Go-UPC\s*$/i, '').replace(/^UPC\s*\d+\s*-\s*/i, '').replace(/\s*\|\s*upcitemdb\.com\s*$/i, '').replace(/\s*-\s*$/, '');
+  return s.length > 3 ? s : '';
+}
+
+// Web lookup straight from the phone via r.jina.ai (CORS-enabled reader). Races two sources.
+function webTitle(bc){var v=codeVariants_(bc),v12=v.filter(function(x){return x.length===12})[0]||v[0];
+  var srcs=[['go-upc','https://go-upc.com/search?q='],['upcitemdb','https://www.upcitemdb.com/upc/']];
+  return new Promise(function(res){var left=srcs.length,done=false;
+    srcs.forEach(function(s){var ctl=window.AbortController?new AbortController():null;var to=setTimeout(function(){if(ctl)ctl.abort()},15000);
+      fetch('https://r.jina.ai/'+s[1]+v12,ctl?{signal:ctl.signal}:{}).then(function(r){return r.text()}).then(function(t){clearTimeout(to);var ti=jinaTitle_(t);
+        if(ti&&!done){done=true;res({title:ti,source:s[0]})}}).catch(function(){}).then(function(){if(--left===0&&!done)res(null)})})})}
+function webIdentify(bc){return webTitle(bc).then(function(o){if(!o)return {found:false};var c=classify_(o.title);
+  return {found:true,source:o.source,title:o.title,suggest:{product:c.product,category:c.category,set:c.set,type:c.type,condition:'Sealed',unitCost:c.msrpGuess||'',msrpSource:c.msrpGuess?'typical MSRP':''}}})}
 var EXEC = 'https://script.google.com/macros/s/AKfycbzSA8CPJPQMDspoRCdxhfdEKRqwb88b0TyA0XFEeZ8boWCng5QWvSCAex12EAhNeQzIZg/exec';
 var ACT = {uiLogin:'login',uiLookup:'lookup',uiLookupProduct:'lookupProduct',uiIdentify:'identify',uiList:'list',uiSave:'addOrUpdate',uiSale:'recordSale'};
 var PIN = '', mode = 'add', cur = null, code = '', scanner = null, busy = false;
@@ -130,7 +210,9 @@ function stopCam(){camUI(false);if(detTimer){clearInterval(detTimer);detTimer=nu
   if(scanner){try{var st=scanner.getState();if(st===2||st===3)scanner.stop().catch(function(){})}catch(e){}}}
 
 function lookup(bc){bc=String(bc||'').replace(/\s+/g,'');if(!bc){msg('Enter a barcode.',false);return}code=bc;msg('Looking up '+bc+'…',true);
-  call('uiIdentify',bc).then(function(r){msg('');if(r&&r.inSheet){cur=r.item;code=r.item.barcode||bc;showItem(r.item);return}
+  var web=webIdentify(bc).catch(function(){return {found:false}});
+  call('uiIdentify',bc).catch(function(){return call('uiLookup',bc).then(function(it){return it?{inSheet:true,item:it}:{found:false}})})
+  .then(function(r){if(r&&r.inSheet)return r;if(r&&r.found)return r;return web}).then(function(r){msg('');if(r&&r.inSheet){cur=r.item;code=r.item.barcode||bc;showItem(r.item);return}
     if(mode==='sale'){msg('Barcode '+bc+' is not in inventory. Pick the product from the list.',false);return}
     cur=null;show('scanCard',false);show('newCard',true);var g=(r&&r.suggest)||{};
     $('nProduct').value=g.product||'';$('nCategory').value=g.category||'';$('nSet').value=g.set||'';$('nType').value=g.type||'';
