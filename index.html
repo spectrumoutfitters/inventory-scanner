@@ -6,8 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Inventory">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#1f6feb">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#121417">
+<meta name="color-scheme" content="dark">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%231f6feb'/%3E%3Ctext x='90' y='120' font-size='100' text-anchor='middle'%3E📦%3C/text%3E%3C/svg%3E">
 <title>Inventory</title>
@@ -54,9 +55,52 @@ table.s{width:100%;border-collapse:collapse;font-size:15px} table.s td,table.s t
 #reader{width:100%;border-radius:12px;overflow:hidden;margin-bottom:8px} #reader video{width:100%!important;border-radius:12px}
 .seg{display:flex;gap:8px;margin-bottom:10px} .seg button{flex:1;margin:0} .seg button.on{background:#111;color:#fff} .seg button:not(.on){background:#e3e6ea;color:#111}
 #updBar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 76px);z-index:45;background:#111;color:#fff;padding:14px;border-radius:12px;text-align:center;font-weight:700}
+.hero{background:linear-gradient(135deg,#1f6feb,#7c3aed);color:#fff;border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 6px 18px #1f6feb40}
+.hero .lbl{font-size:13px;opacity:.85;font-weight:600} .hero .v{font-size:32px;font-weight:800;letter-spacing:-.5px}
+.hero .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px} .hero .g3 div{background:#ffffff22;border-radius:12px;padding:8px} .hero .g3 b{display:block;font-size:18px}
+.sec-h{display:flex;justify-content:space-between;align-items:center;margin:16px 2px 8px;font-size:18px;font-weight:800} .sec-h a{font-size:14px;font-weight:600;color:#1f6feb;text-decoration:none}
+.ins{position:relative;display:flex;gap:10px;align-items:flex-start;background:#fff;border-radius:14px;padding:12px;margin-bottom:8px;box-shadow:0 1px 3px #0002;border-left:5px solid #9aa4b2;transition:transform .2s,opacity .2s;touch-action:pan-y}
+.ins.p-high{border-left-color:#cf222e;background:linear-gradient(90deg,#fff1f0,#fff 40%)} .ins.p-medium{border-left-color:#d4a72c} .ins.p-low{border-left-color:#1a7f37}
+.ins .th{width:48px;height:48px;flex-basis:48px;font-size:22px} .ins .t{flex:1;min-width:0} .ins .m{font-size:15px;line-height:1.35;margin-top:3px}
+.ins .x{width:30px;height:30px;padding:0;margin:0;border-radius:50%;background:#eef0f3;color:#666;font-size:16px;flex:0 0 30px}
+.act{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.5px;padding:3px 8px;border-radius:6px;color:#fff;background:#57606a;margin-right:6px}
+.act.sell{background:#1a7f37}.act.hold{background:#6e7781}.act.buy{background:#1f6feb}.act.alert{background:#cf222e}.act.price{background:#bf8700}
+.empty{background:#fff;border:2px dashed #d0d7de;border-radius:14px;padding:18px;text-align:center;color:#666;font-size:15px}
+.hs{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch} .hs .h{flex:0 0 132px;background:#fff;border-radius:14px;padding:8px;box-shadow:0 1px 3px #0002}
+.hs .h .th{width:116px;height:116px;flex-basis:116px;font-size:44px} .hs .h .n{font-size:13px;font-weight:700;margin-top:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;height:34px} .hs .h b{font-size:16px}
+.bar{display:flex;align-items:center;gap:8px;font-size:14px;margin:7px 0} .bar .nm{flex:0 0 34%;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .bar svg{flex:1;height:18px} .bar .vl{flex:0 0 64px;text-align:right;font-weight:700}
+details.act-log summary{font-weight:700;font-size:16px;padding:12px 2px;color:#444;list-style:none} details.act-log summary::-webkit-details-marker{display:none}
 footer{text-align:center;color:#999;font-size:13px;margin:18px 0}
 .profit{font-size:20px;font-weight:700;padding:10px;border-radius:10px;background:#eef0f3;margin-bottom:10px}
 .backbar{position:sticky;top:0;z-index:5;background:#f4f5f7;margin:0 -12px 8px;padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;border-bottom:1px solid #e3e5e8}.backbar button{width:auto;margin:0;padding:8px 14px;background:none;color:#2f80ed;font-size:17px;font-weight:600}
+
+/* ---- dark theme ---- */
+:root{color-scheme:dark}
+body{background:#121417;color:#e6e8eb}
+.card,.stat,.li,.ins,.hs .h,.tabbar{background:#1c1f24;box-shadow:0 1px 2px #0006}
+.muted,.stat span,label{color:#9aa1ab} h1,h2,.big{color:#e6e8eb}
+input,select,textarea{background:#15181c;color:#e6e8eb;border-color:#343a42} input::placeholder{color:#6b727c}
+button{background:#3b6fc4;color:#f2f4f6} button.sec{background:#2a2f36;color:#e6e8eb} button.green{background:#3f8a55} button.red{background:#b4505a}
+.seg button.on,.chip.on{background:#e6e8eb;color:#121417} .seg button:not(.on),.chip{background:#2a2f36;color:#c9ced4}
+.ok{background:#1f3a2a;color:#d6f0de} .err{background:#432326;color:#f6d6d9}
+.pos{color:#6cc287} .neg,.warn b{color:#e57f88}
+table.s td,table.s th{border-bottom-color:#2a2f36}
+.th,.photos .p,.shotimg{background:#262a30}
+.badge{background:#2a2f36;color:#c9ced4} .badge.red{background:#3d2427;color:#ef9aa1} .badge.grn{background:#1f3a2a;color:#86d39d} .badge.yel{background:#3a321b;color:#e3c46f}
+.tabbar{border-top-color:#2a2f36} .tabbar a{color:#8b929c} .tabbar a.on{color:#7fa9ec}
+.sheet{background:#000a} .sheet>.in{background:#121417}
+.backbar{background:#121417;border-bottom-color:#2a2f36} .backbar button{color:#7fa9ec;background:none}
+.profit{background:#1c1f24} #updBar{background:#2a2f36;color:#e6e8eb}
+.hero{background:linear-gradient(135deg,#2b4a7e,#4b3b78);color:#eef0f3;box-shadow:0 6px 18px #0007}
+.hero .g3 div{background:#ffffff14}
+#hSum .hero{background:linear-gradient(135deg,#25563a,#264a6e)!important}
+.ins.p-high{border-left-color:#c8606a;background:linear-gradient(90deg,#2c2024,#1c1f24 45%)} .ins.p-medium{border-left-color:#c9a24a} .ins.p-low{border-left-color:#5aa874}
+.ins .x{background:#2a2f36;color:#c9ced4}
+.act.sell{background:#3f8a55}.act.hold{background:#5b626b}.act.buy{background:#3b6fc4}.act.alert{background:#b4505a}.act.price{background:#a7842f}
+.empty{background:#1c1f24;border-color:#343a42;color:#9aa1ab} .sec-h a{color:#7fa9ec}
+.bar rect:first-child{fill:#2a2f36} details.act-log summary{color:#c9ced4}
+footer,footer a{color:#6b727c} a{color:#7fa9ec}
+#shotSheet{background:#0d0f11!important}
 </style>
 </head>
 <body>
@@ -74,9 +118,12 @@ footer{text-align:center;color:#999;font-size:13px;margin:18px 0}
   <section id="v-dash">
     <h1>📦 Dashboard <button class="sm sec" onclick="refresh(true)">↻</button></h1>
     <div class="muted" id="dUpd" style="margin:-6px 0 8px"></div>
+    <div id="dIns"></div>
+    <div class="hero" id="dHero"></div>
     <div class="grid" id="dStats"></div>
     <div class="card"><h2>Sales</h2><table class="s" id="dSales"></table><div class="muted" id="dSalesNote"></div></div>
     <div class="row"><button class="green" onclick="go('scan');setMode('add')">📷 Add stock</button><button onclick="go('sell')">💵 Record sale</button></div>
+    <div id="dMore"></div>
   </section>
 
   <!-- INVENTORY -->
@@ -87,6 +134,7 @@ footer{text-align:center;color:#999;font-size:13px;margin:18px 0}
     <div class="chips" id="iFilters"></div>
     <div class="seg" id="iSort"><button data-s="name" class="on">Name</button><button data-s="qty">Qty</button><button data-s="value">Value</button></div>
     <div id="iList"></div>
+    <details class="act-log" id="actWrap"><summary>🕘 Activity log ›</summary><div id="aList"></div></details>
   </section>
 
   <!-- SCAN / ADD -->
@@ -144,9 +192,8 @@ footer{text-align:center;color:#999;font-size:13px;margin:18px 0}
   <!-- SALES HISTORY -->
   <section id="v-sales" class="hide">
     <h1>Sales <span class="muted" id="hCount"></span></h1>
+    <div id="hSum"></div>
     <div id="hList"></div>
-    <h2 style="margin-top:18px">Recent activity</h2>
-    <div id="aList"></div>
   </section>
 
   <footer>Inventory <span id="verTxt"></span> · <a href="#" onclick="logout();return false">Log out</a></footer>
@@ -194,7 +241,7 @@ footer{text-align:center;color:#999;font-size:13px;margin:18px 0}
 </div>
 
 <script>
-var VERSION = '2.2.1';
+var VERSION = '2.3.0';
 var EXEC = 'https://script.google.com/macros/s/AKfycbzSA8CPJPQMDspoRCdxhfdEKRqwb88b0TyA0XFEeZ8boWCng5QWvSCAex12EAhNeQzIZg/exec';
 var PIN = '', D = null, mode = 'add', cur = null, code = '', idRes = null, scanner = null, busy = false, saleItem = null;
 var cat = 'All', flt = '', sortBy = 'name', pending = [], photoTarget = null;
@@ -271,7 +318,41 @@ function renderDash(){var s=D.stats;
   var ss=D.salesStats,rows=[['Today','today'],['7 days','d7'],['30 days','d30'],['All time','all']],partial=false;
   $('dSales').innerHTML='<tr><th></th><th>Sales</th><th>Revenue</th><th>Profit</th></tr>'+rows.map(function(r){var b=ss[r[1]];if(b.profitPartial)partial=true;
     return '<tr><td><b>'+r[0]+'</b></td><td>'+b.count+'</td><td>'+money0(b.revenue)+'</td><td class="'+(b.profit>=0?'pos':'neg')+'">'+money0(b.profit)+(b.profitPartial?'*':'')+'</td></tr>'}).join('');
-  $('dSalesNote').textContent=partial?'* some sales have no unit cost, so profit excludes them.':''}
+  $('dSalesNote').textContent=partial?'* some sales have no unit cost, so profit excludes them.':'';
+  renderIns();renderHero();renderMore()}
+function ask(i){return i.fbPrice!=null&&i.fbPrice>0?i.fbPrice:null}
+function itemVal(i){var a=ask(i);return i.qty*(a!=null?a:(i.unitCost||0))}
+function renderHero(){var cost=0,av=0,ac=0,priced=0,un=0;D.items.forEach(function(i){var c=i.qty*(i.unitCost||0);cost+=c;if(i.qty>0){var a=ask(i);if(a!=null){av+=i.qty*a;ac+=c;priced++}else un++}});
+  var pp=av-ac;$('dHero').innerHTML='<div class="lbl">Inventory at asking price</div><div class="v">'+money0(av)+'</div><div class="lbl">'+priced+' priced items · '+un+' in stock with no price yet</div>'+
+   '<div class="g3"><div><span class="lbl">Cost (all)</span><b>'+money0(cost)+'</b></div><div><span class="lbl">Potential profit</span><b>'+money0(pp)+'</b></div><div><span class="lbl">Margin</span><b>'+(ac>0?Math.round(pp/ac*100)+'%':'—')+'</b></div></div>'}
+function insItem(x){return itemBy(x.barcode,x.item)}
+function renderIns(){var l=(D.insights||[]).filter(function(x){return !dismissed[x.id]});
+  $('dIns').innerHTML='<div class="sec-h" style="margin-top:4px"><span>🔎 Scout insights'+(l.length?' <span class="muted">('+l.length+')</span>':'')+'</span></div>'+(l.length?l.map(function(x){var it=insItem(x);
+   return '<div class="ins p-'+esc(x.priority)+'" data-id="'+esc(x.id)+'">'+thumbHtml(it||{category:''})+'<div class="t"><span class="act '+esc(x.type)+'">'+esc(x.type.toUpperCase())+'</span><b style="font-size:15px">'+esc(x.item||(it&&it.product)||'')+'</b><div class="m">'+esc(x.message)+'</div><div class="muted" style="font-size:12px;margin-top:3px">'+esc(x.ts)+(x.source?' · '+esc(x.source):'')+'</div></div><button class="x" data-x="'+esc(x.id)+'" aria-label="Dismiss">✓</button></div>'}).join('')
+   :'<div class="empty">Scout will post insights here.</div>')}
+var dismissed={};
+function dismissIns(id,el){if(!id)return;dismissed[id]=1;if(el){el.style.transform='translateX(-110%)';el.style.opacity=0;setTimeout(renderIns,220)}else renderIns();
+  call('dismissInsight',{id:id,status:'done'}).then(function(){msg('Insight cleared',true)}).catch(function(e){delete dismissed[id];renderIns();fail(e)})}
+(function(){var box=$('dIns'),sx=0,el=null,dx=0;
+  box.addEventListener('click',function(e){var b=e.target.closest('[data-x]');if(b){e.stopPropagation();dismissIns(b.dataset.x,b.closest('.ins'));return}
+    var c=e.target.closest('.ins');if(c){var x=(D.insights||[]).filter(function(i){return i.id===c.dataset.id})[0],it=x&&insItem(x);if(it)openItem(it)}});
+  box.addEventListener('touchstart',function(e){el=e.target.closest('.ins');sx=e.touches[0].clientX;dx=0;if(el)el.style.transition='none'},{passive:true});
+  box.addEventListener('touchmove',function(e){if(!el)return;dx=e.touches[0].clientX-sx;if(dx<0)el.style.transform='translateX('+dx+'px)'},{passive:true});
+  box.addEventListener('touchend',function(){if(!el)return;el.style.transition='';if(dx<-90)dismissIns(el.dataset.id,el);else el.style.transform='';el=null})})();
+function miniLi(i,right){return '<div class="li" data-row="'+i.row+'">'+thumbHtml(i)+'<div class="t"><div class="n">'+esc(i.product)+'</div><div class="muted">'+esc(i.category||'')+'</div></div><div class="r">'+right+'</div></div>'}
+function renderMore(){var inS=D.items.filter(function(i){return i.qty>0});
+  var top=inS.slice().sort(function(a,b){return itemVal(b)-itemVal(a)}).slice(0,5);
+  var bc={};inS.forEach(function(i){var k=i.category||'Other';bc[k]=(bc[k]||0)+itemVal(i)});
+  var cl=Object.keys(bc).map(function(k){return [k,bc[k]]}).sort(function(a,b){return b[1]-a[1]}),mx=cl.length?cl[0][1]:1,cols=['#5b8bd6','#8a76c9','#5aa874','#c9a24a','#c8606a','#4fa3b8'];
+  var np=D.items.filter(function(i){return i.qty>0&&!hasFront(i)}),low=D.items.filter(function(i){return i.qty<=1}).sort(function(a,b){return a.qty-b.qty});
+  $('dMore').innerHTML='<div class="sec-h"><span>💎 Top holdings</span><a href="#" onclick="sortBy=\'value\';jumpInv(\'\');return false">All ›</a></div><div class="hs">'+top.map(function(i){
+     return '<div class="h li" style="display:block;margin:0" data-row="'+i.row+'">'+thumbHtml(i)+'<div class="n">'+esc(i.product)+'</div><b>'+money0(itemVal(i))+'</b> <span class="muted" style="font-size:12px">×'+i.qty+'</span></div>'}).join('')+'</div>'+
+   '<div class="sec-h"><span>📊 Value by category</span></div><div class="card">'+cl.map(function(c,k){var w=Math.max(2,Math.round(c[1]/mx*100));
+     return '<div class="bar"><span class="nm">'+esc(c[0])+'</span><svg viewBox="0 0 100 18" preserveAspectRatio="none"><rect width="100" height="18" rx="4" fill="#eef0f3"/><rect width="'+w+'" height="18" rx="4" fill="'+cols[k%cols.length]+'"/></svg><span class="vl">'+money0(c[1])+'</span></div>'}).join('')+'<div class="muted" style="font-size:12px">At FB asking price, or cost when no price is set.</div></div>'+
+   '<div class="sec-h"><span>📸 Needs photos ('+np.length+')</span>'+(np.length>5?'<a href="#" onclick="jumpInv(\'nophoto\');return false">All ›</a>':'')+'</div>'+(np.slice(0,5).map(function(i){return miniLi(i,'📸 ›')}).join('')||'<div class="empty">Every item has a front photo 🎉</div>')+
+   '<div class="sec-h"><span>⚠️ Low stock ('+low.length+')</span>'+(low.length>5?'<a href="#" onclick="jumpInv(\'low\');return false">All ›</a>':'')+'</div>'+(low.slice(0,5).map(function(i){return miniLi(i,i.qty<=0?'<span class="neg">Out</span>':'×'+i.qty)}).join('')||'<div class="empty">Nothing low.</div>')}
+$('dMore').onclick=function(e){var el=e.target.closest('[data-row]');if(!el)return;var it=D.items.filter(function(i){return i.row==el.dataset.row})[0];if(!it)return;
+  if(el.closest('.li')&&el.textContent.indexOf('📸 ›')>=0)addPhotosFor(it);else openItem(it)};
 function jumpInv(f){flt=f;cat='All';$('iSearch').value='';go('inv');renderInv()}
 function matches(i,q){if(!q)return true;q=q.toLowerCase();return (i.product+' '+i.set+' '+i.category+' '+i.type+' '+i.barcode+' '+i.notes).toLowerCase().indexOf(q)>=0}
 function badges(i){var b='';if(i.qty<=0)b+='<span class="badge red">Out</span>';else if(i.qty<=1)b+='<span class="badge yel">Low</span>';
@@ -294,6 +375,9 @@ function renderSell(){var q=val('sSearch'),l=D.items.filter(function(i){return i
   $('sList').innerHTML=l.map(function(i){return '<div class="li" data-row="'+i.row+'">'+thumbHtml(i)+'<div class="t"><div class="n">'+esc(i.product)+'</div><div class="muted">On hand '+i.qty+(i.fbPrice?' · FB '+money0(i.fbPrice):'')+'</div></div><div class="r">Sell ›</div></div>'}).join('')||'<div class="muted">Nothing in stock matches.</div>'}
 $('sList').onclick=function(e){var el=e.target.closest('.li');if(el)openSale(D.items.filter(function(i){return i.row==el.dataset.row})[0])};
 function renderSales(){$('hCount').textContent=D.sales.length;
+  var t={rev:0,pr:0,u:0,pl:{}};D.sales.forEach(function(s){t.rev+=s.price;t.u+=s.qty;if(s.profit!=null)t.pr+=s.profit;var k=s.platform||'Other';t.pl[k]=(t.pl[k]||0)+s.price});
+  var ss=D.salesStats||{};$('hSum').innerHTML=D.sales.length?'<div class="hero" style="background:linear-gradient(135deg,#1a7f37,#0969da)"><div class="lbl">All-time revenue</div><div class="v">'+money0(t.rev)+'</div><div class="g3"><div><span class="lbl">Profit</span><b>'+money0(t.pr)+'</b></div><div><span class="lbl">Units sold</span><b>'+t.u+'</b></div><div><span class="lbl">Last 30 days</span><b>'+money0(ss.d30?ss.d30.revenue:0)+'</b></div></div>'+
+    '<div class="lbl" style="margin-top:10px">'+Object.keys(t.pl).map(function(k){return esc(k)+' '+money0(t.pl[k])}).join(' · ')+'</div></div>':'';
   $('hList').innerHTML=D.sales.map(function(s,k){var it=itemBy(s.barcode,s.product);return '<div class="li">'+thumbHtml(it||{category:''})+'<div class="t"><div class="n">'+esc(s.product)+'</div><div class="muted">'+esc(s.date)+' · ×'+s.qty+' · '+esc(s.platform||'')+(s.buyer?' · '+esc(s.buyer):'')+'</div>'+
     (s.profit!=null?'<span class="badge '+(s.profit>=0?'grn':'red')+'">Profit '+money(s.profit)+(s.costEstimated?' (est.)':'')+'</span>':'<span class="badge">No cost</span>')+'</div><div class="r">'+money0(s.price)+'<div><button class="sm red" onclick="delSale('+k+')">Undo</button></div></div></div>'}).join('')||'<div class="muted">No sales yet.</div>';
   $('aList').innerHTML=D.log.map(function(a){return '<div class="li" style="padding:8px 10px"><div class="t"><div class="n" style="font-size:15px">'+esc(a.product||'—')+'</div><div class="muted">'+esc(a.ts)+' · '+esc(a.notes)+'</div></div><div class="r '+(a.qty>0?'pos':a.qty<0?'neg':'')+'">'+(a.qty>0?'+':'')+a.qty+'</div></div>'}).join('')||'<div class="muted">No activity.</div>'}
