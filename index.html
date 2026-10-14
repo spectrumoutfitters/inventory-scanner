@@ -45,7 +45,7 @@ table.s{width:100%;border-collapse:collapse;font-size:15px} table.s td,table.s t
 .tabbar a{flex:1;text-align:center;padding:9px 0 7px;font-size:12px;font-weight:600;color:#666;text-decoration:none} .tabbar a i{display:block;font-style:normal;font-size:24px}
 .tabbar a.on{color:#1f6feb}
 .sheet{position:fixed;inset:0;background:#0006;z-index:50;display:flex;align-items:flex-end}
-.sheet>.in{background:#f4f5f7;width:100%;max-height:94vh;overflow-y:auto;border-radius:18px 18px 0 0;padding:14px 12px calc(env(safe-area-inset-bottom) + 20px);-webkit-overflow-scrolling:touch}
+.sheet>.in{background:#f4f5f7;width:100%;height:100%;max-height:100%;border-radius:0!important;padding-top:0!important;overflow-y:auto;border-radius:18px 18px 0 0;padding:14px 12px calc(env(safe-area-inset-bottom) + 20px);-webkit-overflow-scrolling:touch}
 .photos{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px} .photos .p{position:relative;width:88px;height:88px;border-radius:10px;overflow:hidden;background:#eef0f3}
 .photos .p i{position:absolute;left:0;right:0;bottom:0;background:#000a;color:#fff;font-size:11px;font-style:normal;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .shotimg{width:100%;max-height:46vh;object-fit:contain;border-radius:12px;background:#eef0f3;display:block;margin:8px 0}
@@ -56,6 +56,7 @@ table.s{width:100%;border-collapse:collapse;font-size:15px} table.s td,table.s t
 #updBar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 76px);z-index:45;background:#111;color:#fff;padding:14px;border-radius:12px;text-align:center;font-weight:700}
 footer{text-align:center;color:#999;font-size:13px;margin:18px 0}
 .profit{font-size:20px;font-weight:700;padding:10px;border-radius:10px;background:#eef0f3;margin-bottom:10px}
+.backbar{position:sticky;top:0;z-index:5;background:#f4f5f7;margin:0 -12px 8px;padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;border-bottom:1px solid #e3e5e8}.backbar button{width:auto;margin:0;padding:8px 14px;background:none;color:#2f80ed;font-size:17px;font-weight:600}
 </style>
 </head>
 <body>
@@ -166,18 +167,21 @@ footer{text-align:center;color:#999;font-size:13px;margin:18px 0}
   <button class="green" onclick="saveSale()">Record sale</button>
   <button class="sec" onclick="closeSheet('saleSheet')">Cancel</button>
 </div></div>
-<div class="sheet hide" id="shotSheet"><div class="in">
-  <div class="muted" id="shProg"></div><div class="dots" id="shDots"></div>
-  <div class="big" id="shLabel"></div>
-  <div class="muted">Plain background, good light, fill the frame, no glare.</div>
-  <img id="shImg" class="shotimg hide">
-  <button id="shTake" onclick="$('shotFile').click()">📸 Take photo</button>
-  <button id="shUse" class="green hide" onclick="shotNext(true)">Use photo ✓</button>
-  <button id="shRetake" class="sec hide" onclick="$('shotFile').click()">Retake</button>
-  <button id="shSkip" class="sec" onclick="shotNext(false)">Skip</button>
-  <div class="row"><button class="sec" id="shBack" onclick="shotBack()">‹ Back</button><button class="sec" onclick="shotDone()">Done</button></div>
-  <button class="sec" onclick="shotCancel()">Cancel</button>
-</div></div>
+<div class="hide" id="shotSheet" style="position:fixed;inset:0;background:#000;z-index:60;display:flex;flex-direction:column;color:#fff">
+  <div style="padding:calc(env(safe-area-inset-top) + 8px) 14px 6px;display:flex;align-items:center;gap:10px">
+    <button onclick="shotCancel()" style="width:auto;margin:0;padding:8px 12px;background:#333;color:#fff">✕</button>
+    <div style="flex:1;text-align:center"><div id="shProg" style="font-size:13px;opacity:.75"></div><div id="shLabel" style="font-weight:700;font-size:18px"></div></div>
+    <button onclick="shotDone()" style="width:auto;margin:0;padding:8px 14px;background:#1a7f37;color:#fff">Done</button>
+  </div>
+  <div style="flex:1;position:relative;overflow:hidden"><video id="shVid" playsinline muted autoplay style="width:100%;height:100%;object-fit:cover"></video>
+    <div id="shFlash" style="position:absolute;inset:0;background:#fff;opacity:0;transition:opacity .15s;pointer-events:none"></div></div>
+  <div id="shStrip" style="display:flex;gap:6px;overflow-x:auto;padding:8px 12px;min-height:64px"></div>
+  <div style="display:flex;align-items:center;justify-content:space-around;padding:6px 0 calc(env(safe-area-inset-bottom) + 14px)">
+    <button id="shSkip" onclick="shotSkip()" style="width:76px;margin:0;background:#333;color:#fff;font-size:14px">Skip</button>
+    <button onclick="shotSnap()" aria-label="Take photo" style="width:76px;height:76px;margin:0;border-radius:50%;background:#fff;border:5px solid #888;padding:0"></button>
+    <button onclick="shotRetakeLast()" style="width:76px;margin:0;background:#333;color:#fff;font-size:14px">Undo</button>
+  </div>
+</div>
 <input id="shotFile" type="file" accept="image/*" capture="environment" class="hide" onchange="shotTaken(this)">
 <datalist id="catList"></datalist>
 
@@ -190,7 +194,7 @@ footer{text-align:center;color:#999;font-size:13px;margin:18px 0}
 </div>
 
 <script>
-var VERSION = '2.1.0';
+var VERSION = '2.2.1';
 var EXEC = 'https://script.google.com/macros/s/AKfycbzSA8CPJPQMDspoRCdxhfdEKRqwb88b0TyA0XFEeZ8boWCng5QWvSCAex12EAhNeQzIZg/exec';
 var PIN = '', D = null, mode = 'add', cur = null, code = '', idRes = null, scanner = null, busy = false, saleItem = null;
 var cat = 'All', flt = '', sortBy = 'name', pending = [], photoTarget = null;
@@ -238,7 +242,7 @@ function go(v){['dash','inv','scan','sell','sales'].forEach(function(x){show('v-
   document.querySelectorAll('.tabbar a').forEach(function(a){a.classList.toggle('on',a.dataset.v===v)});
   if(v!=='scan')stopCam();window.scrollTo(0,0)}
 function closeSheet(id){show(id,false);document.body.style.overflow=''}
-function openSheet(id){show(id,true);document.body.style.overflow='hidden'}
+function openSheet(id){show(id,true);document.body.style.overflow='hidden';var e=$(id).querySelector('.in');if(e){if(!e.querySelector('.backbar'))e.insertAdjacentHTML('afterbegin','<div class="backbar"><button onclick="closeSheet(\''+id+'\')">‹ Back</button></div>');e.scrollTop=0;requestAnimationFrame(function(){e.scrollTop=0});setTimeout(function(){e.scrollTop=0},60)}}
 
 /* ---------- thumbnails ---------- */
 function front(it){var ps=(it&&it.photos)||[];return ps.filter(function(p){return /^front/i.test(p.label)})[0]||null}
@@ -332,21 +336,35 @@ function shotKind(type,cond,cat){var t=(type||'')+' '+(cond||''),c=cat||'';
   if(/sealed|etb|box|bundle|tin|collection|blister|blaster|pack|display|case|deck/i.test(t))return 'sealed';
   if(/pok|sport|magic|card/i.test(c)&&!/console|controller|ps5|xbox|switch|supply|sleeve/i.test(t+c))return 'sealed';
   return 'other'}
-var SH=null;
+var SH=null,pstream=null;
 function startShots(kind,haveFront,cb){var l=SHOTS[kind].map(function(x){return {label:x[0],req:!!x[1]&&!haveFront,data:null,skipped:false}});
-  SH={list:l,i:0,cb:cb};openSheet('shotSheet');shotRender()}
-function shotRender(){var c=SH.list[SH.i];$('shProg').textContent='Shot '+(SH.i+1)+' of '+SH.list.length+(c.req?' · required':'');
-  $('shDots').innerHTML=SH.list.map(function(x,k){return '<span class="'+(k===SH.i?'c':x.data?'d':x.skipped?'s':'')+'"></span>'}).join('');
-  $('shLabel').textContent=c.label;$('shImg').src=c.data||'';show('shImg',!!c.data);show('shTake',!c.data);show('shUse',!!c.data);show('shRetake',!!c.data);
-  show('shSkip',!c.req);$('shSkip').textContent=c.data?'Skip (discard photo)':'Skip';show('shBack',SH.i>0)}
-function shotTaken(inp){var f=inp.files[0];inp.value='';if(!f)return;resize(f).then(function(u){SH.list[SH.i].data=u;SH.list[SH.i].skipped=false;shotRender()}).catch(fail)}
-function shotNext(use){var c=SH.list[SH.i];if(!use){if(c.req)return;c.data=null;c.skipped=true}
-  if(SH.i<SH.list.length-1){SH.i++;shotRender()}else shotDone()}
-function shotBack(){if(SH.i>0){SH.i--;shotRender()}}
-function shotDone(){var miss=SH.list.filter(function(x){return x.req&&!x.data})[0];
-  if(miss){msg('The "'+miss.label+'" shot is required.',false);SH.i=SH.list.indexOf(miss);shotRender();return}
-  var out=SH.list.filter(function(x){return x.data}).map(function(x){return {label:x.label.replace(/ \(optional\)$/,''),data:x.data}}),cb=SH.cb;SH=null;closeSheet('shotSheet');cb(out)}
-function shotCancel(){if(SH&&SH.list.some(function(x){return x.data})&&!confirm('Discard the photos you took?'))return;SH=null;closeSheet('shotSheet')}
+  SH={list:l,i:0,cb:cb};stopCam();show('shotSheet',true);document.body.style.overflow='hidden';shotRender();
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('shotFile').click();return}
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1440}},audio:false}).then(function(st){if(!SH){st.getTracks().forEach(function(t){t.stop()});return}
+    pstream=st;var v=$('shVid');v.srcObject=st;v.play().catch(function(){})}).catch(function(){$('shotFile').click()})}
+function stopPhotoCam(){if(pstream){pstream.getTracks().forEach(function(t){t.stop()});pstream=null}$('shVid').srcObject=null}
+function shotRender(){if(!SH)return;if(SH.i>=SH.list.length)SH.i=SH.list.length-1;var c=SH.list[SH.i];
+  $('shProg').textContent='Shot '+(SH.i+1)+' of '+SH.list.length+(c.req?' · required':'');$('shLabel').textContent=c.label.replace(/ \(optional\)$/,'');
+  $('shSkip').style.visibility=c.req?'hidden':'visible';
+  $('shStrip').innerHTML=SH.list.map(function(x,k){return '<div onclick="SH.i='+k+';shotRender()" style="flex:0 0 52px;height:52px;border-radius:8px;overflow:hidden;background:#222;border:2px solid '+(k===SH.i?'#2f80ed':x.data?'#1a7f37':'#444')+';display:flex;align-items:center;justify-content:center;font-size:11px;color:#aaa">'+(x.data?'<img src="'+x.data+'" style="width:100%;height:100%;object-fit:cover">':(k+1))+'</div>'}).join('')}
+function shotStore(u){var c=SH.list[SH.i];c.data=u;c.skipped=false;var f=$('shFlash');f.style.opacity=.8;setTimeout(function(){f.style.opacity=0},120);
+  var nxt=-1;for(var k=SH.i+1;k<SH.list.length;k++)if(!SH.list[k].data&&!SH.list[k].skipped){nxt=k;break}
+  if(nxt<0)for(k=0;k<SH.list.length;k++)if(!SH.list[k].data&&!SH.list[k].skipped){nxt=k;break}
+  if(nxt<0){shotRender();setTimeout(shotDone,250);return}SH.i=nxt;shotRender()}
+function shotSnap(){if(!SH)return;var v=$('shVid');
+  if(!pstream||!v.videoWidth){$('shotFile').click();return}
+  var s=Math.min(1,1600/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement('canvas');c.width=Math.round(v.videoWidth*s);c.height=Math.round(v.videoHeight*s);
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);shotStore(c.toDataURL('image/jpeg',0.85))}
+function shotTaken(inp){var f=inp.files[0];inp.value='';if(!f||!SH)return;resize(f).then(shotStore).catch(fail)}
+function shotSkip(){var c=SH.list[SH.i];if(c.req)return;c.data=null;c.skipped=true;
+  var nxt=-1;for(var k=0;k<SH.list.length;k++)if(!SH.list[k].data&&!SH.list[k].skipped){nxt=k;break}
+  if(nxt<0){shotDone();return}SH.i=nxt;shotRender()}
+function shotRetakeLast(){var c=SH.list[SH.i];if(c.data){c.data=null;shotRender();return}
+  for(var k=SH.list.length-1;k>=0;k--)if(SH.list[k].data){SH.list[k].data=null;SH.i=k;break}shotRender()}
+function shotDone(){if(!SH)return;var miss=SH.list.filter(function(x){return x.req&&!x.data})[0];
+  if(miss){msg('Take the "'+miss.label+'" shot first.',false);SH.i=SH.list.indexOf(miss);shotRender();return}
+  var out=SH.list.filter(function(x){return x.data}).map(function(x){return {label:x.label.replace(/ \(optional\)$/,''),data:x.data}}),cb=SH.cb;SH=null;stopPhotoCam();show('shotSheet',false);document.body.style.overflow='';cb(out)}
+function shotCancel(){if(SH&&SH.list.some(function(x){return x.data})&&!confirm('Discard the photos you took?'))return;SH=null;stopPhotoCam();show('shotSheet',false);document.body.style.overflow=''}
 function shootNew(){startShots(shotKind(val('nType'),val('nCondition'),val('nCategory')),false,function(out){pending=out;renderPending()})}
 function renderPending(){$('nPhotos').innerHTML=pending.map(function(p,k){return '<div class="p"><img src="'+p.data+'"><b onclick="pending.splice('+k+',1);renderPending()">×</b><i>'+esc(p.label)+'</i></div>'}).join('')||'<span class="muted">No photos yet.</span>';
   $('nShotBtn').textContent=pending.length?'📸 Redo photos ('+pending.length+' taken)':'📸 Take photos'}
