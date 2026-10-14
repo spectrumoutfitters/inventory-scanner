@@ -161,12 +161,12 @@ function jinaTitle_(t) {
 }
 
 // Web lookup straight from the phone via r.jina.ai (CORS-enabled reader). Races two sources.
-function webTitle(bc){var v=codeVariants_(bc),v12=v.filter(function(x){return x.length===12})[0]||v[0];
+var WEBDBG=[];function webTitle(bc){WEBDBG=[];var v=codeVariants_(bc),v12=v.filter(function(x){return x.length===12})[0]||v[0];
   var srcs=[['go-upc','https://go-upc.com/search?q='],['upcitemdb','https://www.upcitemdb.com/upc/']];
   return new Promise(function(res){var left=srcs.length,done=false;
     srcs.forEach(function(s){var ctl=window.AbortController?new AbortController():null;var to=setTimeout(function(){if(ctl)ctl.abort()},15000);
-      fetch('https://r.jina.ai/'+s[1]+v12,ctl?{signal:ctl.signal}:{}).then(function(r){return r.text()}).then(function(t){clearTimeout(to);var ti=jinaTitle_(t);
-        if(ti&&!done){done=true;res({title:ti,source:s[0]})}}).catch(function(){}).then(function(){if(--left===0&&!done)res(null)})})})}
+      fetch('https://r.jina.ai/'+s[1]+v12,ctl?{signal:ctl.signal}:{}).then(function(r){WEBDBG.push(s[0]+':'+r.status);return r.text()}).then(function(t){clearTimeout(to);var ti=jinaTitle_(t);if(!ti)WEBDBG.push(s[0]+' title:'+String(t).slice(0,60).replace(/\s+/g,' '));
+        if(ti&&!done){done=true;res({title:ti,source:s[0]})}}).catch(function(e){WEBDBG.push(s[0]+' err:'+(e&&e.message||e))}).then(function(){if(--left===0&&!done)res(null)})})})}
 function webIdentify(bc){return webTitle(bc).then(function(o){if(!o)return {found:false};var c=classify_(o.title);
   return {found:true,source:o.source,title:o.title,suggest:{product:c.product,category:c.category,set:c.set,type:c.type,condition:'Sealed',unitCost:c.msrpGuess||'',msrpSource:c.msrpGuess?'typical MSRP':''}}})}
 var EXEC = 'https://script.google.com/macros/s/AKfycbzSA8CPJPQMDspoRCdxhfdEKRqwb88b0TyA0XFEeZ8boWCng5QWvSCAex12EAhNeQzIZg/exec';
@@ -217,7 +217,7 @@ function lookup(bc){bc=String(bc||'').replace(/\s+/g,'');if(!bc){msg('Enter a ba
     cur=null;show('scanCard',false);show('newCard',true);var g=(r&&r.suggest)||{};
     $('nProduct').value=g.product||'';$('nCategory').value=g.category||'';$('nSet').value=g.set||'';$('nType').value=g.type||'';
     $('nCondition').value='Sealed';$('nQty').value=1;$('nCost').value=g.unitCost||'';$('nNotes').value='';
-    $('newCode').textContent='Barcode: '+bc+(r&&r.found?' · Auto-filled from '+r.source+(g.msrpSource?' (cost = '+g.msrpSource+')':'')+'. Check it, then Save.':' · Not found online, fill in below.');
+    $('newCode').textContent='Barcode: '+bc+(r&&r.found?' · Auto-filled from '+r.source+(g.msrpSource?' (cost = '+g.msrpSource+')':'')+'. Check it, then Save.':' · Not found online, fill in below. ['+WEBDBG.join(' | ')+']');
     if(!g.product)$('nProduct').focus()}).catch(fail)}
 function showItem(it){show('scanCard',false);var info=(it.barcode?'Barcode '+it.barcode+' · ':'')+'On hand: '+it.qty+(it.unitCost!=null&&it.unitCost!==undefined?' · Cost $'+it.unitCost:'');
   if(mode==='sale'){$('sName').textContent=it.product;$('sInfo').textContent=info;$('sQty').value=1;$('sPrice').value=it.fbPrice||'';$('sBuyer').value='';show('saleCard',true)}
