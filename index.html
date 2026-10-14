@@ -89,15 +89,15 @@
 </div>
 
 <script>
-var EXEC = 'https://script.google.com/macros/s/AKfycbxXZcm1oiroU9YaJdV5rduiAvC4QXj1RRFVZ_zSqkKIwCk80vhi2MzwivNTp_7PWAFT8g/exec';
-var ACT = {uiLogin:'login',uiLookup:'lookup',uiLookupProduct:'lookupProduct',uiList:'list',uiSave:'addOrUpdate',uiSale:'recordSale'};
+var EXEC = 'https://script.google.com/macros/s/AKfycbzSA8CPJPQMDspoRCdxhfdEKRqwb88b0TyA0XFEeZ8boWCng5QWvSCAex12EAhNeQzIZg/exec';
+var ACT = {uiLogin:'login',uiLookup:'lookup',uiLookupProduct:'lookupProduct',uiIdentify:'identify',uiList:'list',uiSave:'addOrUpdate',uiSale:'recordSale'};
 var PIN = '', mode = 'add', cur = null, code = '', scanner = null, busy = false;
 function $(id){return document.getElementById(id)}
 function val(id){return $(id).value.trim()}
 function show(id,on){$(id).classList.toggle('hide',!on)}
 function msg(t,ok){$('msg').innerHTML = t ? '<div class="msg '+(ok?'ok':'err')+'">'+esc(t)+'</div>' : ''; if(t) window.scrollTo(0,0)}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-function call(fn,arg){var body={action:ACT[fn],pin:PIN};if(fn==='uiLookup')body.barcode=arg;else if(fn==='uiLookupProduct')body.product=arg;else if(arg&&typeof arg==='object')for(var k in arg)body[k]=arg[k];
+function call(fn,arg){var body={action:ACT[fn],pin:PIN};if(fn==='uiLookup'||fn==='uiIdentify')body.barcode=arg;else if(fn==='uiLookupProduct')body.product=arg;else if(arg&&typeof arg==='object')for(var k in arg)body[k]=arg[k];
   return fetch(EXEC,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),redirect:'follow'})
     .then(function(r){return r.text()}).then(function(t){var j;try{j=JSON.parse(t)}catch(e){throw new Error('Server not updated yet (redeploy Code.gs as a new version).')}if(!j.ok)throw new Error(j.error||'Error');return j.result})}
 function fail(e){busy=false;msg(e && e.message ? e.message : String(e),false)}
@@ -129,8 +129,14 @@ function nativeCam(){var det=new BarcodeDetector({formats:['upc_a','upc_e','ean_
 function stopCam(){camUI(false);if(detTimer){clearInterval(detTimer);detTimer=null}if(stream){stream.getTracks().forEach(function(t){t.stop()});stream=null}
   if(scanner){try{var st=scanner.getState();if(st===2||st===3)scanner.stop().catch(function(){})}catch(e){}}}
 
-function lookup(bc){bc=String(bc||'').replace(/\s+/g,'');if(!bc){msg('Enter a barcode.',false);return}code=bc;msg('');
-  call('uiLookup',bc).then(function(it){if(it){cur=it;showItem(it)}else if(mode==='sale'){msg('Barcode '+bc+' is not in inventory. Pick the product from the list.',false)}else{cur=null;show('scanCard',false);show('newCard',true);$('newCode').textContent='Barcode: '+bc;$('nProduct').focus()}}).catch(fail)}
+function lookup(bc){bc=String(bc||'').replace(/\s+/g,'');if(!bc){msg('Enter a barcode.',false);return}code=bc;msg('Looking up '+bc+'…',true);
+  call('uiIdentify',bc).then(function(r){msg('');if(r&&r.inSheet){cur=r.item;code=r.item.barcode||bc;showItem(r.item);return}
+    if(mode==='sale'){msg('Barcode '+bc+' is not in inventory. Pick the product from the list.',false);return}
+    cur=null;show('scanCard',false);show('newCard',true);var g=(r&&r.suggest)||{};
+    $('nProduct').value=g.product||'';$('nCategory').value=g.category||'';$('nSet').value=g.set||'';$('nType').value=g.type||'';
+    $('nCondition').value='Sealed';$('nQty').value=1;$('nCost').value=g.unitCost||'';$('nNotes').value='';
+    $('newCode').textContent='Barcode: '+bc+(r&&r.found?' · Auto-filled from '+r.source+(g.msrpSource?' (cost = '+g.msrpSource+')':'')+'. Check it, then Save.':' · Not found online, fill in below.');
+    if(!g.product)$('nProduct').focus()}).catch(fail)}
 function showItem(it){show('scanCard',false);var info=(it.barcode?'Barcode '+it.barcode+' · ':'')+'On hand: '+it.qty+(it.unitCost!=null&&it.unitCost!==undefined?' · Cost $'+it.unitCost:'');
   if(mode==='sale'){$('sName').textContent=it.product;$('sInfo').textContent=info;$('sQty').value=1;$('sPrice').value=it.fbPrice||'';$('sBuyer').value='';show('saleCard',true)}
   else{$('exName').textContent=it.product;$('exInfo').textContent=info;$('delta').value=1;$('exCost').value='';$('exNotes').value='';show('existCard',true)}}
