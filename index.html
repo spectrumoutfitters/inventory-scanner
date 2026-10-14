@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Inventory">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1f6feb">
+<title>Inventory Scanner</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  *{box-sizing:border-box} body{font-family:-apple-system,Helvetica,sans-serif;margin:0;padding:16px;background:#f4f5f7;color:#111;font-size:19px}
+  h1{font-size:24px;margin:4px 0 12px} h2{font-size:21px;margin:8px 0}
+  .card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px #0002}
+  input,select,textarea{width:100%;font-size:20px;padding:14px;border:1px solid #bbb;border-radius:10px;margin:6px 0 12px}
+  label{font-weight:600;font-size:16px;color:#444}
+  button{width:100%;font-size:21px;font-weight:700;padding:18px;border:0;border-radius:12px;margin:6px 0;background:#1f6feb;color:#fff}
+  button.sec{background:#e3e6ea;color:#111} button.green{background:#1a7f37} button.red{background:#cf222e}
+  .tabs{display:flex;gap:8px} .tabs button{flex:1} .tabs button.on{background:#111}
+  .row{display:flex;gap:10px;align-items:center} .row button{width:auto;flex:1;font-size:30px}
+  .qty{font-size:34px;text-align:center;font-weight:700;flex:1.3}
+  .big{font-size:22px;font-weight:700} .muted{color:#666;font-size:16px}
+  .msg{padding:14px;border-radius:10px;margin:8px 0;font-weight:600} .ok{background:#dafbe1} .err{background:#ffebe9}
+  #reader{width:100%;border-radius:12px;overflow:hidden;margin-bottom:8px} #reader video{width:100%!important;border-radius:12px} .hide{display:none}
+</style>
+</head>
+<body>
+<h1>📦 Inventory</h1>
+<div id="msg"></div>
+
+<div id="pinView" class="card">
+  <label>PIN</label><input id="pin" type="password" inputmode="numeric" autocomplete="off">
+  <button onclick="login()">Unlock</button>
+  <button class="sec hide" id="logoutBtn" onclick="logout()">Log out</button>
+</div>
+
+<div id="app" class="hide">
+  <div class="tabs"><button id="tabAdd" class="on" onclick="setMode('add')">Add stock</button><button id="tabSale" class="sec" onclick="setMode('sale')">Record sale</button></div>
+
+  <div class="card" id="scanCard">
+    <div id="reader" class="hide"></div>
+    <button id="camBtn" onclick="startCam()">📷 Start scanning</button>
+    <button id="stopBtn" class="sec hide" onclick="stopCam()">Stop camera</button>
+    <div class="muted">Point at the barcode. It scans by itself.</div>
+    <label>Or type barcode</label>
+    <input id="manual" inputmode="numeric" autocomplete="off">
+    <button class="sec" onclick="lookup(val('manual'))">Look up</button>
+    <div id="pickWrap" class="hide"><label>Or pick product</label><select id="pick" onchange="pickProduct()"></select></div>
+  </div>
+
+  <!-- existing item -->
+  <div class="card hide" id="existCard">
+    <div class="big" id="exName"></div><div class="muted" id="exInfo"></div>
+    <label>Change qty by</label>
+    <div class="row"><button class="sec" onclick="bump(-1)">−</button><input id="delta" class="qty" type="number" value="1"><button class="sec" onclick="bump(1)">+</button></div>
+    <label>Unit cost (optional)</label><input id="exCost" type="number" step="0.01" inputmode="decimal">
+    <label>Notes (optional)</label><input id="exNotes">
+    <button class="green" onclick="saveExisting()">Save</button>
+    <button class="sec" onclick="reset()">Cancel</button>
+  </div>
+
+  <!-- new item -->
+  <div class="card hide" id="newCard">
+    <h2>New item</h2><div class="muted" id="newCode"></div>
+    <label>Product</label><input id="nProduct">
+    <label>Category</label><input id="nCategory" placeholder="e.g. Pokémon, Sports">
+    <label>Set</label><input id="nSet">
+    <label>Type</label><input id="nType" placeholder="e.g. ETB, Booster Box, Single">
+    <label>Condition</label><select id="nCondition"><option>Sealed</option><option>Raw</option></select>
+    <label>Qty</label><input id="nQty" type="number" value="1">
+    <label>Unit cost</label><input id="nCost" type="number" step="0.01" inputmode="decimal">
+    <label>Notes</label><input id="nNotes">
+    <button class="green" onclick="saveNew()">Save new item</button>
+    <button class="sec" onclick="reset()">Cancel</button>
+  </div>
+
+  <!-- sale -->
+  <div class="card hide" id="saleCard">
+    <div class="big" id="sName"></div><div class="muted" id="sInfo"></div>
+    <label>Qty sold</label>
+    <div class="row"><button class="sec" onclick="bumpS(-1)">−</button><input id="sQty" class="qty" type="number" value="1"><button class="sec" onclick="bumpS(1)">+</button></div>
+    <label>Price (total $)</label><input id="sPrice" type="number" step="0.01" inputmode="decimal">
+    <label>Platform</label><select id="sPlatform"><option>Facebook Marketplace</option><option>eBay</option><option>In person</option><option>Whatnot</option><option>Other</option></select>
+    <label>Buyer (optional)</label><input id="sBuyer">
+    <button class="green" onclick="saveSale()">Record sale</button>
+    <button class="sec" onclick="reset()">Cancel</button>
+  </div>
+</div>
+
+<script>
+var EXEC = 'https://script.google.com/macros/s/AKfycbxXZcm1oiroU9YaJdV5rduiAvC4QXj1RRFVZ_zSqkKIwCk80vhi2MzwivNTp_7PWAFT8g/exec';
+var ACT = {uiLogin:'login',uiLookup:'lookup',uiLookupProduct:'lookupProduct',uiList:'list',uiSave:'addOrUpdate',uiSale:'recordSale'};
+var PIN = '', mode = 'add', cur = null, code = '', scanner = null, busy = false;
+function $(id){return document.getElementById(id)}
+function val(id){return $(id).value.trim()}
+function show(id,on){$(id).classList.toggle('hide',!on)}
+function msg(t,ok){$('msg').innerHTML = t ? '<div class="msg '+(ok?'ok':'err')+'">'+esc(t)+'</div>' : ''; if(t) window.scrollTo(0,0)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function call(fn,arg){var body={action:ACT[fn],pin:PIN};if(fn==='uiLookup')body.barcode=arg;else if(fn==='uiLookupProduct')body.product=arg;else if(arg&&typeof arg==='object')for(var k in arg)body[k]=arg[k];
+  return fetch(EXEC,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),redirect:'follow'})
+    .then(function(r){return r.text()}).then(function(t){var j;try{j=JSON.parse(t)}catch(e){throw new Error('Server not updated yet (redeploy Code.gs as a new version).')}if(!j.ok)throw new Error(j.error||'Error');return j.result})}
+function fail(e){busy=false;msg(e && e.message ? e.message : String(e),false)}
+
+function login(){PIN=val('pin');call('uiLogin').then(function(){try{localStorage.pin=PIN}catch(e){};show('pinView',false);show('app',true);msg('');loadList()}).catch(function(e){if(/Wrong PIN/.test(e.message)){try{localStorage.removeItem('pin')}catch(x){}}fail(e)})}
+function logout(){try{localStorage.removeItem('pin')}catch(e){}location.reload()}
+try{if(localStorage.pin){$('pin').value=localStorage.pin;login()}}catch(e){}
+
+function loadList(){call('uiList').then(function(items){var s=$('pick');s.innerHTML='<option value="">— choose —</option>';items.sort(function(a,b){return a.product.localeCompare(b.product)}).forEach(function(i){var o=document.createElement('option');o.value=i.barcode?'B:'+i.barcode:'P:'+i.product;o.textContent=i.product+' (qty '+i.qty+')';s.appendChild(o)});show('pickWrap',true)}).catch(function(){})}
+function pickProduct(){var v=$('pick').value;if(!v)return;if(v[0]==='B')lookup(v.slice(2));else{code='';call('uiLookupProduct',v.slice(2)).then(function(it){if(it){cur=it;showItem(it)}}).catch(fail)}}
+
+function setMode(m){mode=m;$('tabAdd').className=m==='add'?'on':'sec';$('tabSale').className=m==='sale'?'on':'sec';reset()}
+function reset(){stopCam();cur=null;code='';['existCard','newCard','saleCard'].forEach(function(i){show(i,false)});show('scanCard',true);$('manual').value='';$('pick').value='';busy=false}
+
+var detTimer=null,stream=null,lastHit=0;
+function okCode(t){t=String(t||'').replace(/\s+/g,'');return /^\d{8}$|^\d{12,14}$/.test(t)?t:(t.length>=4?t:'')}
+function hit(t){var c=okCode(t);if(!c||busy||Date.now()-lastHit<1500)return;lastHit=Date.now();busy=true;beep();if(navigator.vibrate)navigator.vibrate(120);stopCam();busy=false;lookup(c)}
+var actx=null;function beep(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();var o=actx.createOscillator(),g=actx.createGain();o.frequency.value=1500;g.gain.value=0.15;o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+0.12)}catch(e){}}
+function camUI(on){show('reader',on);show('camBtn',!on);show('stopBtn',on)}
+function startCam(){msg('');beep();camUI(true);
+  if(window.Html5Qrcode){var F=Html5QrcodeSupportedFormats;
+    if(!scanner)scanner=new Html5Qrcode('reader',{formatsToSupport:[F.UPC_A,F.UPC_E,F.EAN_13,F.EAN_8,F.CODE_128,F.CODE_39],verbose:false,experimentalFeatures:{useBarCodeDetectorIfSupported:true}});
+    scanner.start({facingMode:'environment'},{fps:12,qrbox:function(w,h){return {width:Math.floor(w*0.9),height:Math.floor(Math.min(h,w)*0.5)}},aspectRatio:1.333},function(t){hit(t)},function(){})
+      .catch(function(e){camUI(false);msg('Camera error: '+(e&&e.message||e)+'. Allow camera access in Settings > Safari > Camera, or type the barcode.',false)});
+  }else if('BarcodeDetector' in window){nativeCam()}
+  else{camUI(false);msg('Scanner library failed to load. Type the barcode instead.',false)}}
+function nativeCam(){var det=new BarcodeDetector({formats:['upc_a','upc_e','ean_13','ean_8','code_128','code_39']});var v=document.createElement('video');v.setAttribute('playsinline','');v.muted=true;$('reader').innerHTML='';$('reader').appendChild(v);
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(s){stream=s;v.srcObject=s;v.play();detTimer=setInterval(function(){det.detect(v).then(function(r){if(r.length)hit(r[0].rawValue)}).catch(function(){})},150)}).catch(function(e){camUI(false);msg('Camera error: '+e.message,false)})}
+function stopCam(){camUI(false);if(detTimer){clearInterval(detTimer);detTimer=null}if(stream){stream.getTracks().forEach(function(t){t.stop()});stream=null}
+  if(scanner){try{var st=scanner.getState();if(st===2||st===3)scanner.stop().catch(function(){})}catch(e){}}}
+
+function lookup(bc){bc=String(bc||'').replace(/\s+/g,'');if(!bc){msg('Enter a barcode.',false);return}code=bc;msg('');
+  call('uiLookup',bc).then(function(it){if(it){cur=it;showItem(it)}else if(mode==='sale'){msg('Barcode '+bc+' is not in inventory. Pick the product from the list.',false)}else{cur=null;show('scanCard',false);show('newCard',true);$('newCode').textContent='Barcode: '+bc;$('nProduct').focus()}}).catch(fail)}
+function showItem(it){show('scanCard',false);var info=(it.barcode?'Barcode '+it.barcode+' · ':'')+'On hand: '+it.qty+(it.unitCost!=null&&it.unitCost!==undefined?' · Cost $'+it.unitCost:'');
+  if(mode==='sale'){$('sName').textContent=it.product;$('sInfo').textContent=info;$('sQty').value=1;$('sPrice').value=it.fbPrice||'';$('sBuyer').value='';show('saleCard',true)}
+  else{$('exName').textContent=it.product;$('exInfo').textContent=info;$('delta').value=1;$('exCost').value='';$('exNotes').value='';show('existCard',true)}}
+function bump(n){$('delta').value=(parseInt($('delta').value)||0)+n}
+function bumpS(n){$('sQty').value=Math.max(1,(parseInt($('sQty').value)||0)+n)}
+
+function done(r,label){busy=false;msg(label+': '+r.item.product+' — now '+r.item.qty+' on hand',true);reset();loadList()}
+function saveExisting(){if(busy)return;var d=parseInt($('delta').value);if(!d){msg('Qty change can\'t be 0.',false);return}busy=true;
+  call('uiSave',{barcode:code||cur.barcode,product:cur.product,qtyDelta:d,unitCost:val('exCost'),notes:val('exNotes')}).then(function(r){done(r,'Saved')}).catch(fail)}
+function saveNew(){if(busy)return;if(!val('nProduct')){msg('Product name is required.',false);return}busy=true;
+  call('uiSave',{barcode:code,product:val('nProduct'),category:val('nCategory'),set:val('nSet'),type:val('nType'),condition:val('nCondition'),qtyDelta:parseInt($('nQty').value)||0,unitCost:val('nCost'),notes:val('nNotes')}).then(function(r){done(r,'Added')}).catch(fail)}
+function saveSale(){if(busy)return;if(val('sPrice')===''){msg('Enter the sale price.',false);return}busy=true;
+  call('uiSale',{barcode:cur.barcode||code,product:cur.product,qty:parseInt($('sQty').value)||1,price:val('sPrice'),platform:val('sPlatform'),buyer:val('sBuyer')}).then(function(r){done(r,'Sale recorded')}).catch(fail)}
+</script>
+</body>
+</html>
