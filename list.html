@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121417"><meta name="color-scheme" content="dark">
+<title>Spectrum Outfitters – Available Inventory</title>
+<meta property="og:title" content="Spectrum Outfitters – Available Inventory">
+<meta property="og:description" content="Sealed Pokémon, sports cards and more. Live stock and market prices.">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#121417;color:#e6e8eb;font-family:-apple-system,Helvetica,sans-serif}
+input{width:100%;font-size:17px;padding:12px;border:1px solid #343a42;border-radius:10px;margin:0 0 10px;background:#15181c;color:#e6e8eb;-webkit-appearance:none}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px}.chip{flex:0 0 auto;padding:8px 14px;border-radius:20px;background:#2a2f36;color:#c9ced4;font-size:15px;font-weight:600;white-space:nowrap}.chip.on{background:#e6e8eb;color:#121417}
+.empty{background:#1c1f24;border:2px dashed #343a42;border-radius:14px;padding:18px;text-align:center;color:#9aa1ab}
+@media(min-width:700px){.bvg{grid-template-columns:repeat(4,1fr)!important}.bv{max-width:1000px;margin:0 auto}}
+.bv{background:#121417;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 24px);color:#e6e8eb}
+.bvh{background:linear-gradient(135deg,#2b4a7e,#4b3b78);border-radius:18px;padding:16px;margin-bottom:12px}
+.bvh .s{font-size:22px;font-weight:800;letter-spacing:-.3px} .bvh .d{font-size:13px;opacity:.85;margin-top:2px}
+.bvg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bvc{background:#1c1f24;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px #0006;display:flex;flex-direction:column}
+.bvc .im{aspect-ratio:1/1;background:#262a30;display:flex;align-items:center;justify-content:center;font-size:46px;overflow:hidden}
+.bvc .im img{width:100%;height:100%;object-fit:cover}
+.bvc .b{padding:9px 10px 11px;flex:1;display:flex;flex-direction:column}
+.bvc .n{font-weight:700;font-size:14px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.bvc .m{font-size:12px;color:#9aa1ab;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bvc .f{display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;padding-top:8px}
+.bvc .p{font-size:19px;font-weight:800;color:#86d39d} .bvc .p.na{font-size:13px;color:#9aa1ab;font-weight:600} .bvc .q{font-size:12px;font-weight:700;background:#2a2f36;border-radius:8px;padding:3px 7px;color:#c9ced4}
+.bvt{display:flex;gap:8px;margin:0 0 10px} .bvt button{width:auto;flex:1;margin:0;padding:10px;font-size:14px}
+.bvfoot{text-align:center;color:#6b727c;font-size:12px;margin:14px 0 4px}
+</style></head><body>
+<div class="bv">
+  <div class="bvh"><div class="s">Spectrum Outfitters – Available Inventory</div><div class="d" id="bvDate">Loading…</div></div>
+  <input id="bvSearch" type="search" placeholder="Search…" oninput="render()">
+  <div class="chips" id="bvChips"></div>
+  <div id="bvList"></div>
+  <div class="bvfoot">Prices shown are current market value. Message us to buy · Spectrum Outfitters</div>
+</div>
+<script>
+var EXEC='https://script.google.com/macros/s/AKfycbzSA8CPJPQMDspoRCdxhfdEKRqwb88b0TyA0XFEeZ8boWCng5QWvSCAex12EAhNeQzIZg/exec';
+function bvSort(a,b){var pa=/pok/i.test(a.category)?0:1,pb=/pok/i.test(b.category)?0:1;if(pa!==pb)return pa-pb;var c=(a.category||'').localeCompare(b.category||'');if(c)return c;var ma=a.market!=null,mb=b.market!=null;if(ma!==mb)return ma?-1:1;if(ma&&b.market!==a.market)return b.market-a.market;return a.name.localeCompare(b.name)}
+function bvIcon(c){c=(c||'').toLowerCase();return /pok/.test(c)?'⚡':/sport/.test(c)?'🏈':/magic/.test(c)?'🔮':/game|electronic|ps5|console/.test(c)?'🎮':'📦'}
+function bvEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function bvMoney(n){return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0})}
+function bvCards(l){return '<div class="bvg">'+l.map(function(i){var ic=bvIcon(i.category);
+  return '<div class="bvc"><div class="im">'+(i.img?'<img loading="lazy" src="'+bvEsc(i.img)+'" onerror="this.parentNode.textContent=\''+ic+'\'">':ic)+'</div><div class="b"><div class="n">'+bvEsc(i.name)+'</div><div class="m">'+bvEsc([i.set,i.type].filter(Boolean).join(' · ')||i.category)+'</div><div class="f">'+
+  (i.market!=null?'<span class="p">'+bvMoney(i.market)+'</span>':'<span class="p na">Ask for price</span>')+'<span class="q">'+i.qty+' avail</span></div></div></div>'}).join('')+'</div>'}
+function bvText(l,shop){var d=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  return shop+' – Available Inventory ('+d+')\n\n'+l.map(function(i){return '• '+i.name+' — '+i.qty+' avail — '+(i.market!=null?bvMoney(i.market):'ask')}).join('\n')}
+function bvToday(){return new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}
+
+var DATA=null,cat='All';function $(i){return document.getElementById(i)}
+function render(){if(!DATA)return;var cs={};DATA.items.forEach(function(i){if(i.category)cs[i.category]=1});
+  $('bvChips').innerHTML=['All'].concat(Object.keys(cs).sort()).map(function(c){return '<span class="chip'+(c===cat?' on':'')+'" data-c="'+bvEsc(c)+'">'+bvEsc(c)+'</span>'}).join('');
+  var q=$('bvSearch').value.trim().toLowerCase(),l=DATA.items.filter(function(i){return i.qty>0&&(cat==='All'||i.category===cat)&&(!q||(i.name+' '+i.set+' '+i.type+' '+i.category).toLowerCase().indexOf(q)>=0)});
+  $('bvList').innerHTML=l.length?bvCards(l):'<div class="empty">Nothing matches.</div>'}
+$('bvChips').onclick=function(e){var c=e.target.dataset.c;if(c!=null){cat=c;render()}};
+function load(){fetch(EXEC,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'publicList'})}).then(function(r){return r.json()}).then(function(j){
+  if(!j.ok)throw new Error(j.error);DATA=j.result;DATA.items.sort(bvSort);$('bvDate').textContent=bvToday()+' · '+DATA.items.length+' items in stock';render()})
+  .catch(function(){$('bvDate').textContent='Could not load the list. Pull down to retry.'})}
+if(window.PRELOAD){DATA=window.PRELOAD;$('bvDate').textContent=bvToday()+' · '+DATA.items.length+' items in stock';render()}else load();
+</script></body></html>
