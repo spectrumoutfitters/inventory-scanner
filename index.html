@@ -101,6 +101,20 @@ table.s td,table.s th{border-bottom-color:#2a2f36}
 .bar rect:first-child{fill:#2a2f36} details.act-log summary{color:#c9ced4}
 footer,footer a{color:#6b727c} a{color:#7fa9ec}
 #shotSheet{background:#0d0f11!important}
+.bv{position:fixed;inset:0;z-index:55;background:#121417;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 24px);color:#e6e8eb}
+.bvh{background:linear-gradient(135deg,#2b4a7e,#4b3b78);border-radius:18px;padding:16px;margin-bottom:12px}
+.bvh .s{font-size:22px;font-weight:800;letter-spacing:-.3px} .bvh .d{font-size:13px;opacity:.85;margin-top:2px}
+.bvg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bvc{background:#1c1f24;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px #0006;display:flex;flex-direction:column}
+.bvc .im{aspect-ratio:1/1;background:#262a30;display:flex;align-items:center;justify-content:center;font-size:46px;overflow:hidden}
+.bvc .im img{width:100%;height:100%;object-fit:cover}
+.bvc .b{padding:9px 10px 11px;flex:1;display:flex;flex-direction:column}
+.bvc .n{font-weight:700;font-size:14px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.bvc .m{font-size:12px;color:#9aa1ab;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bvc .f{display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;padding-top:8px}
+.bvc .p{font-size:19px;font-weight:800;color:#86d39d} .bvc .p.na{font-size:13px;color:#9aa1ab;font-weight:600} .bvc .q{font-size:12px;font-weight:700;background:#2a2f36;border-radius:8px;padding:3px 7px;color:#c9ced4}
+.bvt{display:flex;gap:8px;margin:0 0 10px} .bvt button{width:auto;flex:1;margin:0;padding:10px;font-size:14px}
+.bvfoot{text-align:center;color:#6b727c;font-size:12px;margin:14px 0 4px}
 </style>
 </head>
 <body>
@@ -129,6 +143,7 @@ footer,footer a{color:#6b727c} a{color:#7fa9ec}
   <!-- INVENTORY -->
   <section id="v-inv" class="hide">
     <h1>Inventory <span class="muted" id="iCount"></span></h1>
+    <div class="bvt"><button class="sec" onclick="openBuyer()">👀 Buyer view</button><button class="sec" onclick="shareList()">🔗 Share list</button><button class="sec" onclick="copyText()">📋 Copy as text</button></div>
     <input id="iSearch" type="search" placeholder="Search name, set, barcode…" oninput="renderInv()">
     <div class="chips" id="iChips"></div>
     <div class="chips" id="iFilters"></div>
@@ -199,6 +214,14 @@ footer,footer a{color:#6b727c} a{color:#7fa9ec}
   <footer>Inventory <span id="verTxt"></span> · <a href="#" onclick="logout();return false">Log out</a></footer>
 </div>
 
+<div class="bv hide" id="bvWrap">
+  <div class="bvt" id="bvTools"><button class="sec" onclick="closeBuyer()">‹ Back</button><button class="sec" onclick="shareList()">🔗 Share</button><button class="sec" onclick="copyText()">📋 Text</button></div>
+  <div class="bvh"><div class="s">Spectrum Outfitters – Available Inventory</div><div class="d" id="bvDate"></div></div>
+  <input id="bvSearch" type="search" placeholder="Search…" oninput="renderBuyer()">
+  <div class="chips" id="bvChips"></div>
+  <div id="bvList"></div>
+  <div class="bvfoot">Prices shown are current market value · Spectrum Outfitters</div>
+</div>
 <!-- item detail sheet -->
 <div class="sheet hide" id="itemSheet" onclick="if(event.target===this)closeSheet('itemSheet')"><div class="in" id="itemIn"></div></div>
 <!-- sale sheet -->
@@ -241,7 +264,8 @@ footer,footer a{color:#6b727c} a{color:#7fa9ec}
 </div>
 
 <script>
-var VERSION = '2.3.0';
+var VERSION = '2.4.0';
+var LIST_URL = 'https://spectrumoutfitters.github.io/inventory-scanner/list.html';
 var EXEC = 'https://script.google.com/macros/s/AKfycbzSA8CPJPQMDspoRCdxhfdEKRqwb88b0TyA0XFEeZ8boWCng5QWvSCAex12EAhNeQzIZg/exec';
 var PIN = '', D = null, mode = 'add', cur = null, code = '', idRes = null, scanner = null, busy = false, saleItem = null;
 var cat = 'All', flt = '', sortBy = 'name', pending = [], photoTarget = null;
@@ -320,10 +344,10 @@ function renderDash(){var s=D.stats;
     return '<tr><td><b>'+r[0]+'</b></td><td>'+b.count+'</td><td>'+money0(b.revenue)+'</td><td class="'+(b.profit>=0?'pos':'neg')+'">'+money0(b.profit)+(b.profitPartial?'*':'')+'</td></tr>'}).join('');
   $('dSalesNote').textContent=partial?'* some sales have no unit cost, so profit excludes them.':'';
   renderIns();renderHero();renderMore()}
-function ask(i){return i.fbPrice!=null&&i.fbPrice>0?i.fbPrice:null}
+function ask(i){return i.market!=null&&i.market>0?i.market:(i.fbPrice!=null&&i.fbPrice>0?i.fbPrice:null)}
 function itemVal(i){var a=ask(i);return i.qty*(a!=null?a:(i.unitCost||0))}
 function renderHero(){var cost=0,av=0,ac=0,priced=0,un=0;D.items.forEach(function(i){var c=i.qty*(i.unitCost||0);cost+=c;if(i.qty>0){var a=ask(i);if(a!=null){av+=i.qty*a;ac+=c;priced++}else un++}});
-  var pp=av-ac;$('dHero').innerHTML='<div class="lbl">Inventory at asking price</div><div class="v">'+money0(av)+'</div><div class="lbl">'+priced+' priced items · '+un+' in stock with no price yet</div>'+
+  var pp=av-ac;$('dHero').innerHTML='<div class="lbl">Inventory at market value</div><div class="v">'+money0(av)+'</div><div class="lbl">'+priced+' priced items · '+un+' in stock with no price yet</div>'+
    '<div class="g3"><div><span class="lbl">Cost (all)</span><b>'+money0(cost)+'</b></div><div><span class="lbl">Potential profit</span><b>'+money0(pp)+'</b></div><div><span class="lbl">Margin</span><b>'+(ac>0?Math.round(pp/ac*100)+'%':'—')+'</b></div></div>'}
 function insItem(x){return itemBy(x.barcode,x.item)}
 function renderIns(){var l=(D.insights||[]).filter(function(x){return !dismissed[x.id]});
@@ -348,7 +372,7 @@ function renderMore(){var inS=D.items.filter(function(i){return i.qty>0});
   $('dMore').innerHTML='<div class="sec-h"><span>💎 Top holdings</span><a href="#" onclick="sortBy=\'value\';jumpInv(\'\');return false">All ›</a></div><div class="hs">'+top.map(function(i){
      return '<div class="h li" style="display:block;margin:0" data-row="'+i.row+'">'+thumbHtml(i)+'<div class="n">'+esc(i.product)+'</div><b>'+money0(itemVal(i))+'</b> <span class="muted" style="font-size:12px">×'+i.qty+'</span></div>'}).join('')+'</div>'+
    '<div class="sec-h"><span>📊 Value by category</span></div><div class="card">'+cl.map(function(c,k){var w=Math.max(2,Math.round(c[1]/mx*100));
-     return '<div class="bar"><span class="nm">'+esc(c[0])+'</span><svg viewBox="0 0 100 18" preserveAspectRatio="none"><rect width="100" height="18" rx="4" fill="#eef0f3"/><rect width="'+w+'" height="18" rx="4" fill="'+cols[k%cols.length]+'"/></svg><span class="vl">'+money0(c[1])+'</span></div>'}).join('')+'<div class="muted" style="font-size:12px">At FB asking price, or cost when no price is set.</div></div>'+
+     return '<div class="bar"><span class="nm">'+esc(c[0])+'</span><svg viewBox="0 0 100 18" preserveAspectRatio="none"><rect width="100" height="18" rx="4" fill="#eef0f3"/><rect width="'+w+'" height="18" rx="4" fill="'+cols[k%cols.length]+'"/></svg><span class="vl">'+money0(c[1])+'</span></div>'}).join('')+'<div class="muted" style="font-size:12px">At market price, else FB price, else cost.</div></div>'+
    '<div class="sec-h"><span>📸 Needs photos ('+np.length+')</span>'+(np.length>5?'<a href="#" onclick="jumpInv(\'nophoto\');return false">All ›</a>':'')+'</div>'+(np.slice(0,5).map(function(i){return miniLi(i,'📸 ›')}).join('')||'<div class="empty">Every item has a front photo 🎉</div>')+
    '<div class="sec-h"><span>⚠️ Low stock ('+low.length+')</span>'+(low.length>5?'<a href="#" onclick="jumpInv(\'low\');return false">All ›</a>':'')+'</div>'+(low.slice(0,5).map(function(i){return miniLi(i,i.qty<=0?'<span class="neg">Out</span>':'×'+i.qty)}).join('')||'<div class="empty">Nothing low.</div>')}
 $('dMore').onclick=function(e){var el=e.target.closest('[data-row]');if(!el)return;var it=D.items.filter(function(i){return i.row==el.dataset.row})[0];if(!it)return;
@@ -382,11 +406,38 @@ function renderSales(){$('hCount').textContent=D.sales.length;
     (s.profit!=null?'<span class="badge '+(s.profit>=0?'grn':'red')+'">Profit '+money(s.profit)+(s.costEstimated?' (est.)':'')+'</span>':'<span class="badge">No cost</span>')+'</div><div class="r">'+money0(s.price)+'<div><button class="sm red" onclick="delSale('+k+')">Undo</button></div></div></div>'}).join('')||'<div class="muted">No sales yet.</div>';
   $('aList').innerHTML=D.log.map(function(a){return '<div class="li" style="padding:8px 10px"><div class="t"><div class="n" style="font-size:15px">'+esc(a.product||'—')+'</div><div class="muted">'+esc(a.ts)+' · '+esc(a.notes)+'</div></div><div class="r '+(a.qty>0?'pos':a.qty<0?'neg':'')+'">'+(a.qty>0?'+':'')+a.qty+'</div></div>'}).join('')||'<div class="muted">No activity.</div>'}
 
+function bvSort(a,b){var pa=/pok/i.test(a.category)?0:1,pb=/pok/i.test(b.category)?0:1;if(pa!==pb)return pa-pb;var c=(a.category||'').localeCompare(b.category||'');if(c)return c;var ma=a.market!=null,mb=b.market!=null;if(ma!==mb)return ma?-1:1;if(ma&&b.market!==a.market)return b.market-a.market;return a.name.localeCompare(b.name)}
+function bvIcon(c){c=(c||'').toLowerCase();return /pok/.test(c)?'⚡':/sport/.test(c)?'🏈':/magic/.test(c)?'🔮':/game|electronic|ps5|console/.test(c)?'🎮':'📦'}
+function bvEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function bvMoney(n){return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0})}
+function bvCards(l){return '<div class="bvg">'+l.map(function(i){var ic=bvIcon(i.category);
+  return '<div class="bvc"><div class="im">'+(i.img?'<img loading="lazy" src="'+bvEsc(i.img)+'" onerror="this.parentNode.textContent=\''+ic+'\'">':ic)+'</div><div class="b"><div class="n">'+bvEsc(i.name)+'</div><div class="m">'+bvEsc([i.set,i.type].filter(Boolean).join(' · ')||i.category)+'</div><div class="f">'+
+  (i.market!=null?'<span class="p">'+bvMoney(i.market)+'</span>':'<span class="p na">Ask for price</span>')+'<span class="q">'+i.qty+' avail</span></div></div></div>'}).join('')+'</div>'}
+function bvText(l,shop){var d=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  return shop+' – Available Inventory ('+d+')\n\n'+l.map(function(i){return '• '+i.name+' — '+i.qty+' avail — '+(i.market!=null?bvMoney(i.market):'ask')}).join('\n')}
+function bvToday(){return new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}
+
+/* ---------- buyer view (no cost data) ---------- */
+var bvCat='All';
+function toPublic(i){var f=front(i)||((i.photos||[])[0]);return {name:i.product,set:i.set,type:i.type,category:i.category,qty:i.qty,market:i.market,img:f?dthumb(f.id):(i.imageUrl||'')}}
+function buyerItems(){return D.items.filter(function(i){return i.qty>0}).map(toPublic).sort(bvSort)}
+function openBuyer(){bvCat='All';$('bvSearch').value='';$('bvDate').textContent=bvToday()+' · '+buyerItems().length+' items in stock';renderBuyer();show('bvWrap',true);$('bvWrap').scrollTop=0;document.body.style.overflow='hidden'}
+function closeBuyer(){show('bvWrap',false);document.body.style.overflow=''}
+function bvFiltered(){var q=val('bvSearch').toLowerCase();return buyerItems().filter(function(i){return (bvCat==='All'||i.category===bvCat)&&(!q||(i.name+' '+i.set+' '+i.type+' '+i.category).toLowerCase().indexOf(q)>=0)})}
+function renderBuyer(){var cs={};buyerItems().forEach(function(i){if(i.category)cs[i.category]=1});
+  $('bvChips').innerHTML=['All'].concat(Object.keys(cs).sort()).map(function(c){return '<span class="chip'+(c===bvCat?' on':'')+'" data-c="'+esc(c)+'">'+esc(c)+'</span>'}).join('');
+  var l=bvFiltered();$('bvList').innerHTML=l.length?bvCards(l):'<div class="empty">Nothing matches.</div>'}
+$('bvChips').onclick=function(e){var c=e.target.dataset.c;if(c!=null){bvCat=c;renderBuyer()}};
+function shareList(){var u=LIST_URL;if(navigator.share){navigator.share({title:'Spectrum Outfitters – Available Inventory',url:u}).catch(function(){})}else copyStr(u,'Link copied')}
+function copyText(){var l=$('bvWrap').classList.contains('hide')?buyerItems():bvFiltered();var t=bvText(l,'Spectrum Outfitters')+'\n\nFull list with photos: '+LIST_URL;
+  if(navigator.share&&/iPhone|iPad|Android/i.test(navigator.userAgent))navigator.share({text:t}).catch(function(){copyStr(t,'List copied')});else copyStr(t,'List copied')}
+function copyStr(t,ok){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){msg(ok,true)},function(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');msg(ok,true)}catch(e){msg('Copy failed',false)}a.remove()})}
+
 /* ---------- item detail ---------- */
-var F=[['product','Product'],['category','Category'],['set','Set'],['type','Type'],['condition','Condition'],['barcode','Barcode','numeric'],['qty','Qty on hand','number'],['unitCost','Unit cost','decimal'],['fbPrice','FB price','price'],['fbStatus','FB status'],['fbLink','FB link','url'],['notes','Notes']];
+var F=[['product','Product'],['category','Category'],['set','Set'],['type','Type'],['condition','Condition'],['barcode','Barcode','numeric'],['qty','Qty on hand','number'],['unitCost','Unit cost','decimal'],['fbPrice','FB price','price'],['market','Market price','price'],['fbStatus','FB status'],['fbLink','FB link','url'],['notes','Notes']];
 var editing=null;
 function openItem(it){if(!it)return;editing=it;var ph=(it.photos||[]).map(function(p){return '<div class="p"><img src="'+dthumb(p.id)+'"><b onclick="delPhoto(\''+esc(p.id)+'\')">×</b><i>'+esc(p.label||'Photo')+'</i></div>'}).join('');
-  $('itemIn').innerHTML='<div class="row" style="align-items:flex-start">'+thumbHtml(it,true).replace('class="th lg"','class="th lg" style="flex:0 0 120px"')+'<div><div class="big">'+esc(it.product)+'</div><div class="muted">On hand '+it.qty+' · Value '+money(it.qty*(it.unitCost||0))+'</div>'+badges(it)+'</div></div>'+
+  $('itemIn').innerHTML='<div class="row" style="align-items:flex-start">'+thumbHtml(it,true).replace('class="th lg"','class="th lg" style="flex:0 0 120px"')+'<div><div class="big">'+esc(it.product)+'</div><div class="muted">On hand '+it.qty+' · Cost value '+money(it.qty*(it.unitCost||0))+(it.market!=null?'<br>Market '+money0(it.market)+' ea'+(it.marketUpdated?' ('+esc(it.marketUpdated)+')':''):'')+'</div>'+badges(it)+'</div></div>'+
    '<button class="green" onclick="closeSheet(\'itemSheet\');openSale(editing)"'+(it.qty>0?'':' disabled style="opacity:.5"')+'>💵 Record sale</button>'+
    '<div class="card"><label>Photos</label><div class="photos">'+(ph||'<span class="muted">No photos yet.</span>')+'</div><button class="sec" onclick="addPhotosFor(editing)">📸 Add photos</button>'+(it.imageUrl&&!hasFront(it)&&!(it.photos||[]).length?'<div class="muted">Showing online image until you add your own.</div>':'')+'</div>'+
    '<div class="card">'+F.map(function(f){var v=it[f[0]];v=v==null?'':v;var t=f[2]==='number'||f[2]==='decimal'||f[2]==='price'?'type="number" '+(f[2]==='price'?'step="5" inputmode="numeric"':f[2]==='decimal'?'step="0.01" inputmode="decimal"':'inputmode="numeric"'):f[2]==='numeric'?'inputmode="numeric"':f[2]==='url'?'type="url"':'';
